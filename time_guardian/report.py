@@ -15,6 +15,8 @@ from time_guardian.storage import Storage
 logger = logging.getLogger(__name__)
 console = Console()
 
+STORAGE_DIR = Path.home() / ".time-guardian"
+
 
 class Report:
     """Handles report generation and summary display for Time Guardian."""
@@ -145,13 +147,13 @@ def generate_report(output_path: Path) -> None:
     Args:
         output_path: Path to save the report
     """
-    storage = Storage()
+    storage = Storage(STORAGE_DIR)
     report = Report(storage)
     report.generate_report(output_path)
 
 
 def display_summary() -> None:
     """Display a summary of screen time activities."""
-    storage = Storage()
+    storage = Storage(STORAGE_DIR)
     report = Report(storage)
     report.display_summary()

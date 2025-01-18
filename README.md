@@ -54,14 +54,21 @@ time-guardian version
 
 ## Project Structure
 
-- `time_guardian/__main__.py`
-- `time_guardian/cli.py`
-- `time_guardian/capture.py`
-- `time_guardian/analyze.py`
-- `time_guardian/ai_classifier.py`
-- `time_guardian/storage.py`
-- `time_guardian/report.py`
-- `time_guardian/utils.py`
+```mermaid
+graph TD
+    A[Screen Capture] -->|Every N seconds| B[Compare with Previous]
+    B -->|Different| C[Save Screenshot]
+    B -->|Identical| D[Log No Change]
+    C -->|PNG files| E[AI Classification]
+    E -->|GPT-4 Vision API| F[Activity Labels]
+    F -->|JSON files| G[Activity Analysis]
+    G -->|Process Results| H[Generate Report]
+    H -->|1. Activity Counts| I[Summary Display]
+    H -->|2. AI Summary| I
+    D -.->|Metadata Only| G
+```
+
+
 
 ## Changelog
 

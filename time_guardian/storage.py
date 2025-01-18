@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -16,18 +17,29 @@ class Storage:
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
         self.analysis_dir.mkdir(parents=True, exist_ok=True)
 
-    def save_screenshot(self, screenshot: bytes, timestamp: int, monitor_idx: int = 0) -> Path:
+    def save_screenshot(
+        self,
+        screenshot: bytes,
+        timestamp: int,
+        monitor_idx: int = 0,
+        resolution: tuple[int, int] | None = None,
+        frame_no: int = 0,
+    ) -> Path:
         """Save a screenshot to disk.
 
         Args:
             screenshot: Screenshot data in bytes
             timestamp: Unix timestamp when screenshot was taken
             monitor_idx: Index of the monitor (0 for primary monitor)
+            resolution: Tuple of (width, height) for the monitor resolution
 
         Returns:
             Path: Path where screenshot was saved
         """
-        filepath = self.screenshots_dir / f"screenshot_{timestamp}_monitor{monitor_idx}.png"
+        dt = datetime.utcfromtimestamp(timestamp)
+        dt_str = dt.strftime("%Y-%m-%d-%H-%M-%S")
+        res_str = f"_{resolution[0]}x{resolution[1]}" if resolution else ""
+        filepath = self.screenshots_dir / f"{dt_str}_F{frame_no}_M{monitor_idx}{res_str}.png"
         try:
             filepath.write_bytes(screenshot)
             logger.info(f"Screenshot saved: {filepath}")

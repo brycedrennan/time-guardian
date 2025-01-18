@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 client = OpenAI()
 
+STORAGE_DIR = Path.home() / ".time-guardian"
+
 
 def process_screenshot(image_path: Path) -> str:
     """Process a single screenshot and return its description."""
@@ -58,6 +60,7 @@ def process_screenshots(screenshot_dir: Path = Path("screenshots")) -> list[tupl
     results = []
     for image_file in screenshot_dir.glob("*.png"):
         result = process_screenshot(image_file)
+        logger.info(f"Processed {image_file.name}: {result}")
         results.append((image_file.name, result))
     return results
 

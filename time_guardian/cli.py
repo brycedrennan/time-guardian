@@ -5,8 +5,10 @@ from pathlib import Path
 import typer
 from rich.console import Console
 from rich.logging import RichHandler
+from rich.table import Table
 
 from time_guardian import __version__, analyze, capture, report
+from time_guardian.windows import get_window_info
 
 app = typer.Typer(
     help="AI-powered time travel for your screen", no_args_is_help=True, add_completion=False, name="time-guardian"
@@ -27,17 +29,19 @@ def setup_logging():
 
 @app.command()
 def track(
-    duration: int = typer.Argument(..., help="Duration in minutes to track screen activity"),
+    duration: int | None = typer.Option(
+        None, help="Duration in minutes to track screen activity (default: run forever)"
+    ),
     interval: int = typer.Option(5, help="Interval in seconds between screenshots"),
-    output_dir: str = typer.Option("screenshots", "--output-dir", "-o", help="Directory to save screenshots"),
 ):
     """Start tracking screen activity by capturing screenshots."""
     try:
         setup_logging()
-        output_path = Path(output_dir)
-        console.print(f"Starting screen tracking for [bold cyan]{duration}[/] minutes[yellow]...[/]")
+        if duration is None:
+            console.print("Starting screen tracking [bold cyan]forever[/] (press Ctrl+C to stop)[yellow]...[/]")
+        else:
+            console.print(f"Starting screen tracking for [bold cyan]{duration}[/] minutes[yellow]...[/]")
         console.print(f"Taking screenshots every [bold cyan]{interval}[/] seconds")
-        console.print(f"Saving screenshots to: [magenta]{output_path.absolute()}[/]")
 
         capture.start_tracking(duration, interval)
     except KeyboardInterrupt:
@@ -49,7 +53,7 @@ def track(
 
 
 @app.command()
-def analyze_cmd(
+def analyze_screenshots(
     screenshot_dir: str = typer.Option(
         "screenshots", "--screenshot-dir", "-s", help="Directory containing screenshots"
     ),
@@ -106,6 +110,51 @@ def summary(
 def version():
     """Display the current version of Time Guardian."""
     console.print(f"Time Guardian version: {__version__}")
+
+
+@app.command()
+def windows():
+    """Display information about all visible windows on screen."""
+    try:
+        setup_logging()
+        windows = get_window_info()
+
+        if not windows:
+            console.print("No visible windows found")
+            return
+
+        table = Table(title="Window Locations")
+        table.add_column("ID", justify="right")
+        table.add_column("PID", justify="right")
+        table.add_column("Application")
+        table.add_column("Window")
+        table.add_column("Position")
+        table.add_column("Size")
+        table.add_column("Layer", justify="right")
+        table.add_column("Stack", justify="right")
+        table.add_column("Visible %", justify="right")
+        table.add_column("Display", justify="right")
+
+        for window in windows:
+            pos = window["position"]
+            size = window["size"]
+            table.add_row(
+                str(window["window_id"]),
+                str(window["pid"]),
+                window["app_name"],
+                window["window_name"] or "-",
+                f"x={pos['x']:.0f}, y={pos['y']:.0f}",
+                f"{size['width']:.0f}x{size['height']:.0f}",
+                str(window["layer"]),
+                str(window["stack_order"]),
+                f"{window['visible_percent']:.0f}%",
+                str(window["display"]),
+            )
+
+        console.print(table)
+    except Exception as e:
+        logger.error(f"Error getting window information: {e}")
+        sys.exit(1)
 
 
 def main():
