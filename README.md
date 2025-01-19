@@ -52,7 +52,19 @@ time-guardian version
 - `summary`: Display activity summary
   - `--report-file`: Optional. Report file to summarize (default: report.txt)
 
-## Project Structure
+## Pipeline Processing
+
+ -Capture every N seconds
+   - screenshots of each monitor
+   - map of windows and their positions
+ - compare with previous screenshot
+ - if different, save screenshot
+ - if identical, log no change
+ - AI classification of screenshot
+ - GPT-4 Vision API to get activity labels
+ - JSON files for activity analysis
+ - Process Results to generate report
+ - Summary Display to display activity counts and AI summary
 
 ```mermaid
 graph TD

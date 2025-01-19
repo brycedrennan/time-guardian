@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class Storage:
         Returns:
             Path: Path where screenshot was saved
         """
-        dt = datetime.utcfromtimestamp(timestamp)
+        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
         dt_str = dt.strftime("%Y-%m-%d-%H-%M-%S")
         res_str = f"_{resolution[0]}x{resolution[1]}" if resolution else ""
         filepath = self.screenshots_dir / f"{dt_str}_F{frame_no}_M{monitor_idx}{res_str}.png"

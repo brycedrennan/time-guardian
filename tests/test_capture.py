@@ -34,9 +34,14 @@ def test_capture_screenshot(mock_mss, tmp_path):
 
 
 def test_capture_screenshot_error(mock_mss, tmp_path):
-    mock_mss.return_value.__enter__.return_value.grab.side_effect = Exception("Mocked error")
+    mock_sct = mock_mss.return_value.__enter__.return_value
+    mock_sct.monitors = [
+        {"top": 0, "left": 0, "width": 3840, "height": 1080},  # Combined monitor
+        {"top": 0, "left": 0, "width": 1920, "height": 1080},  # Individual monitor
+    ]
+    mock_sct.grab.side_effect = Exception("Mocked error")
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Mocked error"):
         capture_screenshot()
 
 

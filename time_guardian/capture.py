@@ -7,7 +7,7 @@ import mss
 import mss.tools
 import schedule
 import typer
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from time_guardian.storage import Storage
 
@@ -46,7 +46,7 @@ def images_are_different(img1_bytes: bytes, img2_bytes: bytes, threshold: float 
 
         return (diff_pixels / total_pixels) > threshold
 
-    except Exception as e:
+    except (UnidentifiedImageError, Image.DecompressionBombError) as e:
         logger.error(f"Error comparing images: {e}")
         return True  # If comparison fails, assume images are different
 

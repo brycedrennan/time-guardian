@@ -28,12 +28,12 @@ def test_full_workflow(mock_storage, mock_start_tracking, mock_analyze):
     runner = CliRunner()
 
     # Run track command
-    result = runner.invoke(app, ["track", "1", "--interval", "5"])
+    result = runner.invoke(app, ["track", "--duration", "1", "--interval", "5"])
     assert result.exit_code == 0
     mock_start_tracking.assert_called_once()
 
     # Run analyze command
-    result = runner.invoke(app, ["analyze-cmd"])
+    result = runner.invoke(app, ["analyze-screenshots"])
     assert result.exit_code == 0
     mock_analyze.assert_called_once()
 
@@ -44,21 +44,20 @@ def test_error_handling(mock_storage, mock_start_tracking, mock_analyze, caplog)
     # Mock error during analysis
     mock_analyze.side_effect = Exception("Error during analysis")
 
-    with patch("pathlib.Path.exists") as mock_exists:
-        mock_exists.return_value = True
-        result = runner.invoke(app, ["analyze-cmd"])
+    # Mock the screenshots directory to exist
+    screenshots_dir = mock_storage / "screenshots"
+    screenshots_dir.mkdir(exist_ok=True)
 
-        assert result.exit_code == 1
-        # Check both stdout and stderr for the error message
-        output = result.stdout + result.stderr
-        # Remove ANSI color codes and extra whitespace
-        import re
+    with patch("time_guardian.report.generate_report") as mock_report:
+        # Mock error during report generation
+        mock_report.side_effect = Exception("Error during report generation")
 
-        output = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", output).strip()
-        # Check for error message in output
-        assert "Error during analysis" in output
-        # Check log output for error message
-        assert any("Error during analysis" in record.message for record in caplog.records)
+        with pytest.raises(Exception, match="Error during analysis"):
+            runner.invoke(
+                app, ["analyze-screenshots", "--screenshot-dir", str(screenshots_dir)], catch_exceptions=False
+            )
+
+        mock_report.assert_not_called()
 
 
 @pytest.mark.xfail(reason="Real workflow test is flaky due to timing issues")

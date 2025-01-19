@@ -15,8 +15,8 @@ def storage(tmp_path):
 @pytest.mark.parametrize(
     ("method", "data", "expected_path", "extra_args"),
     [
-        ("save_screenshot", b"screenshot_data", "screenshots/screenshot_1234567890_monitor0.png", {"monitor_idx": 0}),
-        ("save_screenshot", b"screenshot_data", "screenshots/screenshot_1234567890_monitor1.png", {"monitor_idx": 1}),
+        ("save_screenshot", b"screenshot_data", "screenshots/2009-02-13-23-31-30_F0_M0.png", {"monitor_idx": 0}),
+        ("save_screenshot", b"screenshot_data", "screenshots/2009-02-13-23-31-30_F0_M1.png", {"monitor_idx": 1}),
         ("save_analysis", {"classification": "coding"}, "analysis/analysis_1234567890.json", {}),
     ],
 )

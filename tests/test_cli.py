@@ -33,18 +33,23 @@ def test_invalid_command(runner):
 def test_track_command(runner, mock_storage, duration, interval):
     mock_storage / "screenshots"
     with patch("time_guardian.capture.start_tracking") as mock_start:
-        result = runner.invoke(app, ["track", str(duration), "--interval", str(interval)])
+        result = runner.invoke(app, ["track", "--duration", str(duration), "--interval", str(interval)])
         assert result.exit_code == 0
-        mock_start.assert_called_once()
+        mock_start.assert_called_once_with(duration, interval)
 
 
 def test_analyze_command(runner, mock_storage):
-    mock_storage / "screenshots"
-    with patch("time_guardian.analyze.process_screenshots") as mock_analyze:
+    screenshots_dir = mock_storage / "screenshots"
+    screenshots_dir.mkdir(exist_ok=True)
+    with (
+        patch("time_guardian.analyze.process_screenshots") as mock_analyze,
+        patch("time_guardian.report.generate_report") as mock_generate,
+    ):
         mock_analyze.return_value = [("test.png", "Test activity")]
-        result = runner.invoke(app, ["analyze-cmd"])
+        result = runner.invoke(app, ["analyze-screenshots", "--screenshot-dir", str(screenshots_dir)])
         assert result.exit_code == 0
-        mock_analyze.assert_called_once()
+        mock_analyze.assert_called_once_with(str(screenshots_dir))
+        mock_generate.assert_called_once()
 
 
 def test_summary_command(runner, mock_storage):
