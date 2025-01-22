@@ -98,13 +98,18 @@ def version():
 
 
 @app.command()
-def windows():
-    """Display information about all visible windows on screen."""
+def windows(
+    show_all: bool = typer.Option(False, "--all", help="Show all windows instead of just layer 0 windows"),
+):
+    """Display information about visible windows on screen. By default, only shows layer 0 windows."""
     setup_logging()
-    windows = get_window_info()
+    windows = get_window_info(all_layers=show_all)
 
     if not windows:
-        console.print("No visible windows found")
+        if show_all:
+            console.print("No visible windows found")
+        else:
+            console.print("No layer 0 windows found. Use --all to see all windows.")
         return
 
     table = Table(title="Window Locations")

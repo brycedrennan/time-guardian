@@ -1,6 +1,6 @@
 import pytest
 
-from time_guardian.visibility import calculate_visibility_bitmap
+from time_guardian.visibility import add_visibility_pct
 
 
 def test_calculate_visibility_basic():
@@ -24,10 +24,12 @@ def test_calculate_visibility_basic():
         },
     ]
 
-    visibility = calculate_visibility_bitmap(windows, displays)
-    assert len(visibility) == 2
-    assert visibility[1] == pytest.approx(100.0)  # Window 1 fully visible
-    assert visibility[2] == pytest.approx(100.0)  # Window 2 fully visible
+    add_visibility_pct(windows, displays)
+    assert len(windows) == 2
+    assert windows[0]["visible_percent"] == pytest.approx(100.0)  # Window 1 fully visible
+    assert windows[1]["visible_percent"] == pytest.approx(100.0)  # Window 2 fully visible
+    assert windows[0]["visible_pixels"] == 10000  # 100x100
+    assert windows[1]["visible_pixels"] == 10000  # 100x100
 
 
 def test_calculate_visibility_overlapping():
@@ -51,10 +53,12 @@ def test_calculate_visibility_overlapping():
         },
     ]
 
-    visibility = calculate_visibility_bitmap(windows, displays)
-    assert len(visibility) == 2
-    assert visibility[1] == pytest.approx(75.0)  # Window 1 is 75% visible (top-left quarter covered)
-    assert visibility[2] == pytest.approx(100.0)  # Window 2 fully visible
+    add_visibility_pct(windows, displays)
+    assert len(windows) == 2
+    assert windows[0]["visible_percent"] == pytest.approx(75.0)  # Window 1 is 75% visible
+    assert windows[1]["visible_percent"] == pytest.approx(100.0)  # Window 2 fully visible
+    assert windows[0]["visible_pixels"] == 30000  # 75% of 200x200
+    assert windows[1]["visible_pixels"] == 40000  # 200x200
 
 
 def test_calculate_visibility_multiple_displays():
@@ -74,9 +78,10 @@ def test_calculate_visibility_multiple_displays():
         },
     ]
 
-    visibility = calculate_visibility_bitmap(windows, displays)
-    assert len(visibility) == 1
-    assert visibility[1] == pytest.approx(100.0)  # Window should be fully visible across displays
+    add_visibility_pct(windows, displays)
+    assert len(windows) == 1
+    assert windows[0]["visible_percent"] == pytest.approx(100.0)  # Window should be fully visible
+    assert windows[0]["visible_pixels"] == 40000  # 200x200
 
 
 def test_calculate_visibility_layered():
@@ -100,7 +105,9 @@ def test_calculate_visibility_layered():
         },
     ]
 
-    visibility = calculate_visibility_bitmap(windows, displays)
-    assert len(visibility) == 2
-    assert visibility[1] == pytest.approx(75.0)  # Window in bottom layer partially covered
-    assert visibility[2] == pytest.approx(100.0)  # Window in top layer fully visible
+    add_visibility_pct(windows, displays)
+    assert len(windows) == 2
+    assert windows[0]["visible_percent"] == pytest.approx(75.0)  # Window in bottom layer partially covered
+    assert windows[1]["visible_percent"] == pytest.approx(100.0)  # Window in top layer fully visible
+    assert windows[0]["visible_pixels"] == 30000  # 75% of 200x200
+    assert windows[1]["visible_pixels"] == 40000  # 200x200

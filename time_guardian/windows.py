@@ -8,7 +8,7 @@ from Quartz import (
     kCGWindowListOptionOnScreenOnly,
 )
 
-from time_guardian.visibility import calculate_visibility_bitmap
+from time_guardian.visibility import add_visibility_pct
 
 
 def get_displays():
@@ -50,8 +50,12 @@ def get_window_display(window_bounds, displays):
     return 1  # Default to first display if not found
 
 
-def get_window_info():
-    """Get information about all visible windows on screen."""
+def get_window_info(all_layers: bool = True):
+    """Get information about visible windows on screen.
+
+    Args:
+        all_layers: If True, return windows from all layers. If False, only return layer 0 windows.
+    """
     window_list = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID)
 
     displays = get_displays()
@@ -61,6 +65,8 @@ def get_window_info():
     layer_groups = {}
     for idx, window in enumerate(window_list):
         layer = window.get("kCGWindowLayer", 0)
+        if not all_layers and layer != 0:
+            continue
         if layer not in layer_groups:
             layer_groups[layer] = []
         # Store original index to preserve front-to-back ordering within layer
@@ -99,8 +105,7 @@ def get_window_info():
     if windows:
         save_path = Path.home() / ".time-guardian" / "visibility_bitmap.png"
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        visibility = calculate_visibility_bitmap(windows, displays, save_path=save_path)
-        for window in windows:
-            window["visible_percent"] = visibility[window["window_id"]]
+        save_path = None
+        add_visibility_pct(windows, displays, save_path=save_path)
 
     return windows
