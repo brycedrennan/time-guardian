@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 from time_guardian.storage import Storage
@@ -15,16 +16,35 @@ def storage(tmp_path):
 @pytest.mark.parametrize(
     ("method", "data", "expected_path", "extra_args"),
     [
-        ("save_screenshot", b"screenshot_data", "screenshots/2009-02-13-23-31-30_F0_M0.png", {"monitor_idx": 0}),
-        ("save_screenshot", b"screenshot_data", "screenshots/2009-02-13-23-31-30_F0_M1.png", {"monitor_idx": 1}),
+        (
+            "save_screenshot",
+            np.zeros((100, 100, 3), dtype=np.uint8),
+            "screenshots/2009-02-13-23-31-30_F0.png",
+            {"frame_no": 0},
+        ),
+        (
+            "save_screenshot",
+            np.zeros((100, 100, 3), dtype=np.uint8),
+            "screenshots/2009-02-13-23-31-30_F1.png",
+            {"frame_no": 1},
+        ),
         ("save_analysis", {"classification": "coding"}, "analysis/analysis_1234567890.json", {}),
     ],
 )
 def test_save_methods(storage, method, data, expected_path, extra_args):
-    with patch("pathlib.Path.write_bytes" if method == "save_screenshot" else "pathlib.Path.write_text") as mock_write:
+    with (
+        patch("pathlib.Path.write_bytes" if method == "save_screenshot" else "pathlib.Path.write_text") as mock_write,
+        patch("PIL.Image.fromarray") as mock_fromarray,
+    ):
+        mock_image = MagicMock()
+        mock_fromarray.return_value = mock_image
         filepath = getattr(storage, method)(data, 1234567890, **extra_args)
         assert filepath == storage.base_dir / expected_path
-        mock_write.assert_called_once()
+        if method == "save_screenshot":
+            mock_fromarray.assert_called_once()
+            mock_image.save.assert_called_once()
+        else:
+            mock_write.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -57,8 +77,8 @@ def test_get_analysis_by_timestamp_not_found(storage):
 
 
 def test_save_screenshot_error(storage):
-    with pytest.raises(IOError), patch("pathlib.Path.write_bytes", side_effect=OSError("Permission denied")):
-        storage.save_screenshot(b"data", 1234567890)
+    with pytest.raises(IOError), patch("PIL.Image.fromarray", side_effect=OSError("Failed to save image")):
+        storage.save_screenshot(np.zeros((100, 100, 3), dtype=np.uint8), 1234567890)
 
 
 def test_save_analysis_json_error(storage):

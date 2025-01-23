@@ -27,22 +27,31 @@ def test_capture_screenshot(mock_mss, tmp_path):
     mock_screenshot.height = 1080
     mock_sct.grab.return_value = mock_screenshot
 
-    result = capture_screenshot()
+    # Clear the lru_cache for screenshotter
+    with patch("time_guardian.capture.screenshotter") as mock_screenshotter:
+        mock_screenshotter.cache_clear()
+        mock_screenshotter.return_value = mock_sct
+        result = capture_screenshot()
 
-    mock_sct.grab.assert_called_once()
-    assert result is not None
+        mock_sct.grab.assert_called_once()
+        assert result is not None
 
 
 def test_capture_screenshot_error(mock_mss, tmp_path):
-    mock_sct = mock_mss.return_value.__enter__.return_value
+    mock_sct = MagicMock()
+    mock_mss.return_value.__enter__.return_value = mock_sct
     mock_sct.monitors = [
         {"top": 0, "left": 0, "width": 3840, "height": 1080},  # Combined monitor
         {"top": 0, "left": 0, "width": 1920, "height": 1080},  # Individual monitor
     ]
     mock_sct.grab.side_effect = Exception("Mocked error")
 
-    with pytest.raises(Exception, match="Mocked error"):
-        capture_screenshot()
+    # Clear the lru_cache for screenshotter
+    with patch("time_guardian.capture.screenshotter") as mock_screenshotter:
+        mock_screenshotter.cache_clear()
+        mock_screenshotter.return_value = mock_sct
+        with pytest.raises(Exception, match="Mocked error"):
+            capture_screenshot()
 
 
 @patch("time_guardian.capture.schedule")

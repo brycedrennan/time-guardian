@@ -50,7 +50,7 @@ def get_window_display(window_bounds, displays):
     return 1  # Default to first display if not found
 
 
-def get_window_info(all_layers: bool = True):
+def get_window_info(all_layers: bool = True, show_visibility: bool = True):
     """Get information about visible windows on screen.
 
     Args:
@@ -65,7 +65,7 @@ def get_window_info(all_layers: bool = True):
     layer_groups = {}
     for idx, window in enumerate(window_list):
         layer = window.get("kCGWindowLayer", 0)
-        if not all_layers and layer != 0:
+        if not all_layers and (layer < 0 or layer >= 24):
             continue
         if layer not in layer_groups:
             layer_groups[layer] = []
@@ -102,10 +102,15 @@ def get_window_info(all_layers: bool = True):
                 )
 
     # Calculate actual visibility percentages
-    if windows:
+    if windows and show_visibility:
         save_path = Path.home() / ".time-guardian" / "visibility_bitmap.png"
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        save_path = None
+        # save_path = None
         add_visibility_pct(windows, displays, save_path=save_path)
 
     return windows
+
+
+if __name__ == "__main__":
+    windows = get_window_info(show_visibility=True)
+    print(windows)
