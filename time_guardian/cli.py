@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 import typer
+from mss import mss
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.table import Table
@@ -141,6 +142,92 @@ def windows(
         )
 
     console.print(table)
+
+
+@app.command()
+def monitors(
+    width: int = typer.Option(90, "--width", "-w", help="Target width in characters for the visual representation"),
+):
+    """Display information about connected monitors."""
+    setup_logging()
+
+    with mss() as sct:
+        monitors = sct.monitors
+
+        # Show total resolution first
+        total = monitors[0]
+        console.print(f"Total resolution: [bold cyan]{total['width']}x{total['height']}[/]\n")
+
+        # Create visual representation
+        # Find bounds
+        min_x = min(m["left"] for m in monitors[1:])
+        min_y = min(m["top"] for m in monitors[1:])
+        max_x = max(m["left"] + m["width"] for m in monitors[1:])
+        max_y = max(m["top"] + m["height"] for m in monitors[1:])
+
+        # Scale to reasonable terminal size
+        scale_x = (max_x - min_x) / (width / 2)  # Divide width by 2 since we double it later
+        scale_y = (max_y - min_y) / 15  # Fixed height scale
+        scale = max(scale_x, scale_y, 1)  # Use larger scale to maintain aspect ratio
+
+        # Create visual map
+        visual = []
+        for i, monitor in enumerate(monitors[1:], 1):
+            # Double the horizontal scale to compensate for character aspect ratio
+            x1 = int(2 * (monitor["left"] - min_x) / scale)
+            y1 = int((monitor["top"] - min_y) / scale)
+            x2 = int(2 * (monitor["left"] + monitor["width"] - min_x) / scale)
+            y2 = int((monitor["top"] + monitor["height"] - min_y) / scale)
+
+            # Ensure we have enough rows
+            while len(visual) <= y2:
+                visual.append([" "] * (x2 + 1))
+            # Ensure each row has enough columns
+            for row in visual:
+                while len(row) <= x2:
+                    row.append(" ")
+
+            # Draw monitor borders
+            for y in range(y1, y2 + 1):
+                for x in range(x1, x2 + 1):
+                    if y == y1 and x == x1:
+                        visual[y][x] = "┌"
+                    elif y == y1 and x == x2:
+                        visual[y][x] = "┐"
+                    elif y == y2 and x == x1:
+                        visual[y][x] = "└"
+                    elif y == y2 and x == x2:
+                        visual[y][x] = "┘"
+                    elif y in (y1, y2):
+                        visual[y][x] = "─"
+                    elif x in (x1, x2):
+                        visual[y][x] = "│"
+                    elif x == x1 + (x2 - x1) // 2 and y == y1 + (y2 - y1) // 2:
+                        visual[y][x] = str(i)
+                    elif visual[y][x] == " ":
+                        visual[y][x] = "·"
+
+        # Print the visual representation
+        console.print("\n[bold]Monitor Arrangement:[/]")
+        for row in visual:
+            console.print("".join(row))
+        console.print()
+
+        table = Table(title="Connected Monitors")
+        table.add_column("Monitor", justify="right")
+        table.add_column("Position")
+        table.add_column("Size")
+        table.add_column("Is Primary")
+
+        for i, monitor in enumerate(monitors[1:], 1):  # Skip index 0 which represents "all monitors"
+            table.add_row(
+                str(i),
+                f"x={monitor['left']}, y={monitor['top']}",
+                f"{monitor['width']}x{monitor['height']}",
+                "✓" if monitor.get("is_primary") else "✗",
+            )
+
+        console.print(table)
 
 
 def main():
