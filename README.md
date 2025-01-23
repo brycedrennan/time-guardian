@@ -95,3 +95,30 @@ graph TD
    - `make lint` to run the linter
    - `make autoformat` to format the code
    - `make type-check` to run the type checker
+
+
+## Todo
+ - [x] capture screenshots (with multi-monitor support)
+ - [x] capture a map of the windows and their positions
+ - [x] use window map to mask the screenshot (to ignore things like the background, dock, menu bar, etc)
+ - [x] only save screenshots if there was a change from the previous screenshot
+ - [x] extract per-window images
+ - [ ] create description of each window using LLM on each window image that had changes
+ - [ ] create function that collects currently running processes and their full paths
+   - [ ] collect: application name, window title, window_id, process_id, process path,content description, task type, etc
+ - [ ] collect all the descriptions and send them to LLM for normalization and summarization
+ - [ ] implement activity categorization (work, entertainment, productivity, etc)
+ - [ ] implement idle time detection and handling
+ - [ ] implement real-time activity monitoring dashboard
+
+ ## Future
+  - [ ] implement intelligent screenshot compression to reduce storage usage
+  - [ ] create privacy mode to automatically blur sensitive content (passwords, emails, etc)
+  - [ ] create daily/weekly summary reports with activity trends
+  - [ ] add export functionality for activity data (CSV, JSON)
+  - [ ] create API endpoints for external tool integration
+  - [ ] ocr text from each window image
+  - [ ] train model to look specifically at browser window urls
+
+## Won't Do
+ - [ ] add configurable rules for window/application exclusions
