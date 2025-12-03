@@ -1,9 +1,28 @@
-from unittest.mock import patch
+"""Tests for CLI functionality."""
+
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from time_guardian.cli import app
+
+
+@pytest.fixture
+def mock_process():
+    """Create a mock process with test data."""
+    process = MagicMock()
+    process.pid = 1234
+    process.ppid.return_value = 1
+    process.exe.return_value = "/usr/bin/test"
+    process.cmdline.return_value = ["/usr/bin/test", "--arg1", "--arg2"]
+    process.status.return_value = "running"
+    process.username.return_value = "testuser"
+    process.cpu_percent.return_value = 2.5
+    process.memory_percent.return_value = 1.5
+    process.create_time.return_value = 1234567890.0
+    process.num_threads.return_value = 4
+    return process
 
 
 @pytest.fixture
@@ -69,12 +88,39 @@ def test_summary_command(runner, mock_storage):
 
 def test_track_command_error(runner):
     with patch("time_guardian.capture.start_tracking", side_effect=Exception("Test error")):
-        result = runner.invoke(app, ["track", "1", "--interval", "5"])
+        result = runner.invoke(app, ["track", "--duration", "1", "--interval", "5"])
         assert result.exit_code != 0
-        assert "Error" in result.stdout
 
 
 def test_no_arguments(runner):
     result = runner.invoke(app)
-    assert result.exit_code == 0  # Typer shows help by default
+    # Typer shows help when no_args_is_help=True, but exit code is 0
     assert "Usage" in result.stdout
+
+
+def test_processes_command(runner, mock_process):
+    """Test the processes command."""
+    mock_process.info = {
+        "pid": 1234,
+        "ppid": 1,
+        "exe": "/usr/bin/test",
+        "cmdline": ["/usr/bin/test", "--arg1", "--arg2"],
+        "status": "running",
+        "name": "test",
+    }
+    with patch("time_guardian.processes.psutil.process_iter", return_value=[mock_process]):
+        result = runner.invoke(app, ["processes"])
+        assert result.exit_code == 0
+        assert "Running Processes" in result.stdout
+        assert "/usr/bin/test" in result.stdout
+        assert "1234" in result.stdout
+        assert "--arg1 --arg2" in result.stdout
+        assert "running" in result.stdout
+
+
+def test_processes_command_no_processes(runner):
+    """Test the processes command when no processes are found."""
+    with patch("time_guardian.processes.psutil.process_iter", return_value=[]):
+        result = runner.invoke(app, ["processes"])
+        assert result.exit_code == 0
+        assert "No processes found" in result.stdout

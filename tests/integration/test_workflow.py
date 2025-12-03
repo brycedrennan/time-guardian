@@ -39,7 +39,7 @@ def test_full_workflow(mock_storage, mock_start_tracking, mock_analyze):
 
 
 def test_error_handling(mock_storage, mock_start_tracking, mock_analyze, caplog):
-    runner = CliRunner(mix_stderr=False)  # Capture stderr separately
+    runner = CliRunner()
 
     # Mock error during analysis
     mock_analyze.side_effect = Exception("Error during analysis")

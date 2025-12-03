@@ -3,8 +3,6 @@ import time
 from functools import lru_cache
 from pathlib import Path
 
-import mss
-import mss.tools
 import numpy as np
 import schedule
 import typer
@@ -82,23 +80,30 @@ def has_significant_diff(img1: np.array, img2: np.array, threshold: float = 0.00
 
 @lru_cache
 def screenshotter():
-    return mss.mss()
+    # return mss.mss()
+    from time_guardian.mss_enhanced import MSS
+
+    return MSS()
 
 
 def capture_screenshot():
     sct = screenshotter()
-    displays = get_displays()
-    min_y = min(d["bounds"]["y"] for d in displays)
-    max_y = max(d["bounds"]["y"] + d["bounds"]["height"] for d in displays)
-    logical_display_height = max_y - min_y
+    monitor = sct.monitors[0]
+    s = sct.grab(monitor)
+    scale_factor = int(s.height / monitor["height"])
+    np_img = np.ndarray(
+        shape=(s.height // scale_factor, s.width // scale_factor, 3),
+        dtype=np.uint8,
+        buffer=s.raw,
+        strides=(s.width * (scale_factor * 4), scale_factor * 4, 1),
+    )
 
-    # Get raw pixels from the screen, save it to a Numpy array
-    np_img = np.array(sct.grab(sct.monitors[0]))
-
-    # if the monitors are using scaling, reduce the screenshot to the logical display height
-    if np_img.shape[0] > logical_display_height:
-        scale_factor = int(np_img.shape[0] / logical_display_height)
-        np_img = np_img[::scale_factor, ::scale_factor, :3]
+    # with timer("Checking if np_img.shape[0] > logical_display_height"):
+    #     # if the monitors are using scaling, reduce the screenshot to the logical display height
+    #     if np_img.shape[0] > logical_display_height:
+    #         with timer(f"Scaling down by {np_img.shape[0] / logical_display_height}"):
+    #             scale_factor = int(np_img.shape[0] / logical_display_height)
+    #             np_img = np_img[::scale_factor, ::scale_factor, :3]
 
     return np_img
 

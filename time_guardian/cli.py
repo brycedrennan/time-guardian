@@ -3,12 +3,16 @@ from pathlib import Path
 
 import typer
 from mss import mss
+from PIL import Image
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.table import Table
 
 from time_guardian import __version__, analyze, capture, report
-from time_guardian.windows import get_window_info
+from time_guardian.monitors import render_monitor_arrangement_to_text
+from time_guardian.perf import timer
+from time_guardian.processes import get_all_processes
+from time_guardian.windows import get_displays, get_window_info
 
 app = typer.Typer(
     help="AI-powered time travel for your screen",
@@ -156,61 +160,13 @@ def monitors(
 
         # Show total resolution first
         total = monitors[0]
-        console.print(f"Total resolution: [bold cyan]{total['width']}x{total['height']}[/]\n")
+        console.print(f"Total logical resolution: [bold cyan]{total['width']}x{total['height']}[/]\n")
 
-        # Create visual representation
-        # Find bounds
-        min_x = min(m["left"] for m in monitors[1:])
-        min_y = min(m["top"] for m in monitors[1:])
-        max_x = max(m["left"] + m["width"] for m in monitors[1:])
-        max_y = max(m["top"] + m["height"] for m in monitors[1:])
-
-        # Scale to reasonable terminal size
-        scale_x = (max_x - min_x) / (width / 2)  # Divide width by 2 since we double it later
-        scale_y = (max_y - min_y) / 15  # Fixed height scale
-        scale = max(scale_x, scale_y, 1)  # Use larger scale to maintain aspect ratio
-
-        # Create visual map
-        visual = []
-        for i, monitor in enumerate(monitors[1:], 1):
-            # Double the horizontal scale to compensate for character aspect ratio
-            x1 = int(2 * (monitor["left"] - min_x) / scale)
-            y1 = int((monitor["top"] - min_y) / scale)
-            x2 = int(2 * (monitor["left"] + monitor["width"] - min_x) / scale)
-            y2 = int((monitor["top"] + monitor["height"] - min_y) / scale)
-
-            # Ensure we have enough rows
-            while len(visual) <= y2:
-                visual.append([" "] * (x2 + 1))
-            # Ensure each row has enough columns
-            for row in visual:
-                while len(row) <= x2:
-                    row.append(" ")
-
-            # Draw monitor borders
-            for y in range(y1, y2 + 1):
-                for x in range(x1, x2 + 1):
-                    if y == y1 and x == x1:
-                        visual[y][x] = "┌"
-                    elif y == y1 and x == x2:
-                        visual[y][x] = "┐"
-                    elif y == y2 and x == x1:
-                        visual[y][x] = "└"
-                    elif y == y2 and x == x2:
-                        visual[y][x] = "┘"
-                    elif y in (y1, y2):
-                        visual[y][x] = "─"
-                    elif x in (x1, x2):
-                        visual[y][x] = "│"
-                    elif x == x1 + (x2 - x1) // 2 and y == y1 + (y2 - y1) // 2:
-                        visual[y][x] = str(i)
-                    elif visual[y][x] == " ":
-                        visual[y][x] = "·"
-
+        visual = render_monitor_arrangement_to_text(monitors, width)
         # Print the visual representation
         console.print("\n[bold]Monitor Arrangement:[/]")
         for row in visual:
-            console.print("".join(row))
+            console.print(row)
         console.print()
 
         table = Table(title="Connected Monitors")
@@ -228,6 +184,97 @@ def monitors(
             )
 
         console.print(table)
+
+
+@app.command()
+def processes():
+    """Display information about all running processes."""
+    setup_logging()
+    processes = get_all_processes()
+
+    if not processes:
+        console.print("No processes found")
+        return
+
+    table = Table(title="Running Processes")
+    table.add_column("PID", justify="right")
+    table.add_column("Parent PID", justify="right")
+    table.add_column("Status")
+    table.add_column("Executable")
+    table.add_column("Command")
+
+    # Sort by executable path, using empty string for None to handle missing executables
+    for proc in sorted(processes, key=lambda x: x.get("exe", "") or ""):
+        cmdline = proc.get("cmdline")
+        cmd_str = " ".join(cmdline) if cmdline else "-"
+
+        table.add_row(
+            str(proc["pid"]),
+            str(proc["ppid"]),
+            proc.get("status", "-"),
+            proc.get("exe", "-") or "-",
+            cmd_str,
+        )
+
+    console.print(table)
+
+
+@app.command()
+def perfcheck():
+    """Check performance of various operations."""
+    setup_logging()
+
+    capture.screenshotter.cache_clear()
+    with timer("Getting screenshotter (uncached)"):
+        capture.screenshotter()
+    with timer("Getting screenshotter (cached)"):
+        capture.screenshotter()
+
+    with timer("Getting all processes 1"):
+        get_all_processes()
+    with timer("Getting all processes 2"):
+        get_all_processes()
+
+    for i in range(5):
+        with timer(f"Getting displays {i}"):
+            get_displays()
+
+    for i in range(5):
+        with timer(f"Getting window info, all_layers=True, show_visibility=False, {i}"):
+            get_window_info(all_layers=True, show_visibility=False)
+    for i in range(5):
+        with timer(f"Getting window info, all_layers=True, show_visibility=True, {i}"):
+            get_window_info(all_layers=True, show_visibility=True)
+
+    for i in range(5):
+        with timer(f"Getting window info, all_layers=False, show_visibility=False, {i}"):
+            get_window_info(all_layers=False, show_visibility=False)
+    for i in range(5):
+        with timer(f"Getting window info, all_layers=False, show_visibility=True, {i}"):
+            get_window_info(all_layers=False, show_visibility=True)
+
+    for i in range(5):
+        with timer(f"get screenshot, {i}"):
+            capture.capture_screenshot()
+
+
+@app.command()
+def screenshot(
+    output: str = typer.Option("screenshot.png", "--output", "-o", help="Output file path for screenshot"),
+):
+    """Take a screenshot and save it to the specified path."""
+    setup_logging()
+    console.print(f"Taking screenshot and saving to [bold cyan]{output}[/][yellow]...[/]")
+    with timer("capture_screenshot"):
+        np_img = capture.capture_screenshot()
+
+    # Convert BGR to RGB since capture_screenshot returns BGR format
+    rgb_img = np_img[..., ::-1]
+
+    with timer("saved image"):
+        Image.fromarray(rgb_img).save(output, optimize=False)
+    console.print(f"Screenshot saved to [bold cyan]{output}[/]")
+    return 0
 
 
 def main():

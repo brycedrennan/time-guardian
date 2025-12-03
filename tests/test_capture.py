@@ -1,54 +1,47 @@
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 import schedule
 
 from time_guardian.capture import capture_screenshot, start_tracking
 
 
-@pytest.fixture
-def mock_mss():
-    with patch("time_guardian.capture.mss.mss") as mock:
-        yield mock
-
-
-def test_capture_screenshot(mock_mss, tmp_path):
+def test_capture_screenshot(tmp_path):
+    """Test screenshot capture with mocked MSS."""
     mock_sct = MagicMock()
-    mock_mss.return_value.__enter__.return_value = mock_sct
     mock_sct.monitors = [
         {"top": 0, "left": 0, "width": 1920, "height": 1080},
         {"top": 0, "left": 0, "width": 1920, "height": 1080},
     ]
 
-    # Mock the screenshot object
+    # Mock the screenshot object with realistic data
     mock_screenshot = MagicMock()
-    mock_screenshot.rgb = b"fake_image_data"
     mock_screenshot.width = 1920
     mock_screenshot.height = 1080
+    # Create fake raw data: 4 bytes per pixel (BGRA), matching dimensions
+    mock_screenshot.raw = bytes(1920 * 1080 * 4)
     mock_sct.grab.return_value = mock_screenshot
 
-    # Clear the lru_cache for screenshotter
     with patch("time_guardian.capture.screenshotter") as mock_screenshotter:
-        mock_screenshotter.cache_clear()
         mock_screenshotter.return_value = mock_sct
         result = capture_screenshot()
 
         mock_sct.grab.assert_called_once()
         assert result is not None
+        assert isinstance(result, np.ndarray)
 
 
-def test_capture_screenshot_error(mock_mss, tmp_path):
+def test_capture_screenshot_error(tmp_path):
+    """Test screenshot capture error handling."""
     mock_sct = MagicMock()
-    mock_mss.return_value.__enter__.return_value = mock_sct
     mock_sct.monitors = [
         {"top": 0, "left": 0, "width": 3840, "height": 1080},  # Combined monitor
         {"top": 0, "left": 0, "width": 1920, "height": 1080},  # Individual monitor
     ]
     mock_sct.grab.side_effect = Exception("Mocked error")
 
-    # Clear the lru_cache for screenshotter
     with patch("time_guardian.capture.screenshotter") as mock_screenshotter:
-        mock_screenshotter.cache_clear()
         mock_screenshotter.return_value = mock_sct
         with pytest.raises(Exception, match="Mocked error"):
             capture_screenshot()
