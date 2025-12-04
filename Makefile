@@ -34,7 +34,11 @@ version:  ## Show the current version (from git tags).
 build:  ## Build the package distribution files.
 	@echo -e "\n\033[0;34m📦 Building package...\033[0m\n"
 	@rm -rf dist build *.egg-info
+	@# Rewrite relative image URLs to absolute GitHub raw URLs for PyPI
+	@sed -i.bak 's|src="docs/|src="https://raw.githubusercontent.com/brycedrennan/time-guardian/master/docs/|g' README.md
 	@uv run -- python -m build
+	@# Restore original README
+	@mv README.md.bak README.md
 	@echo -e "\033[0;32m✅ Build complete! Files in dist/\033[0m\n"
 	@ls -la dist/
 
