@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://github.com/brycedrennan/time-guardian/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/actions/workflow/status/brycedrennan/time-guardian/ci.yaml?branch=master&label=CI&logo=github" alt="CI Status"></a>
-  <a href="https://pypi.org/project/time-guardian/"><img src="https://img.shields.io/pypi/v/time-guardian?logo=pypi&logoColor=white" alt="PyPI Version"></a>
+  <a href="https://pypi.org/project/time-guard/"><img src="https://img.shields.io/pypi/v/time-guard?logo=pypi&logoColor=white" alt="PyPI Version"></a>
   <a href="https://github.com/brycedrennan/time-guardian/blob/master/LICENSE"><img src="https://img.shields.io/github/license/brycedrennan/time-guardian" alt="License"></a>
 </p>
 
@@ -25,7 +25,7 @@ Ever wonder how you *really* spent your day? Time Guardian silently captures scr
 ## Installation
 
 ```bash
-pip install time-guardian
+pip install time-guard
 ```
 
 ## Quick Start
@@ -181,4 +181,4 @@ MIT
 
 ---
 
-**Stop wondering. Start knowing.** → `pip install time-guardian`
+**Stop wondering. Start knowing.** → `pip install time-guard`
