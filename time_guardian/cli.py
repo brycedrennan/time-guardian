@@ -12,6 +12,7 @@ from time_guardian import __version__, analyze, capture, report
 from time_guardian.monitors import render_monitor_arrangement_to_text
 from time_guardian.perf import timer
 from time_guardian.processes import get_all_processes
+from time_guardian.utils import check_screen_recording_permission
 from time_guardian.windows import get_displays, get_window_info
 
 app = typer.Typer(
@@ -41,17 +42,75 @@ def track(
         None, help="Duration in minutes to track screen activity (default: run forever)"
     ),
     interval: int = typer.Option(5, help="Interval in seconds between screenshots"),
+    ai: bool = typer.Option(True, "--ai/--no-ai", help="Enable AI classification of window contents"),
+    min_pixels: int = typer.Option(1000, help="Minimum changed pixels to trigger analysis"),
+    skip_permission_check: bool = typer.Option(False, "--skip-permission-check", help="Skip screen recording permission check"),
 ):
     """Start tracking screen activity by capturing screenshots."""
     setup_logging()
+    
+    # Check screen recording permission
+    if not skip_permission_check:
+        has_permission, message = check_screen_recording_permission()
+        if not has_permission:
+            console.print(f"[bold red]Error:[/bold red] Screen recording permission issue detected.")
+            console.print(f"[dim]{message}[/dim]")
+            console.print()
+            console.print("Run [cyan]time-guardian check-permissions[/cyan] for a visual test.")
+            raise typer.Exit(code=1)
+        console.print("[green]✓[/green] Screen recording permission verified")
+    
     if duration is None:
         console.print("Starting screen tracking [bold cyan]forever[/] (press Ctrl+C to stop)[yellow]...[/]")
     else:
         console.print(f"Starting screen tracking for [bold cyan]{duration}[/] minutes[yellow]...[/]")
     console.print(f"Taking screenshots every [bold cyan]{interval}[/] seconds")
+    if ai:
+        console.print("[bold green]AI classification enabled[/] - will analyze changed windows")
+    else:
+        console.print("[yellow]AI classification disabled[/]")
 
-    capture.start_tracking(duration, interval)
+    capture.start_tracking(duration, interval, enable_ai=ai, min_changed_pixels=min_pixels)
     return 0
+
+
+@app.command()
+def check_permissions():
+    """Check if screen recording permission is granted by taking a test screenshot."""
+    setup_logging()
+    import subprocess
+    import tempfile
+    from pathlib import Path
+    
+    console.print("Taking a test screenshot...")
+    
+    # Take screenshot
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        screenshot_path = Path(f.name)
+    
+    try:
+        np_img = capture.capture_screenshot()
+        rgb_img = np_img[..., ::-1]
+        Image.fromarray(rgb_img).save(screenshot_path)
+        
+        console.print(f"Screenshot saved to: [cyan]{screenshot_path}[/cyan]")
+        console.print("Opening screenshot for inspection...")
+        
+        # Open the screenshot
+        subprocess.run(["open", str(screenshot_path)], check=False)
+        
+        console.print()
+        console.print("[bold]Does the screenshot show your actual screen content?[/bold]")
+        console.print("  - If YES: Screen recording permission is working ✓")
+        console.print("  - If NO (shows solid color or just wallpaper):")
+        console.print("    1. Open [cyan]System Settings > Privacy & Security > Screen Recording[/cyan]")
+        console.print("    2. Enable permission for your terminal app (iTerm, Terminal, Cursor, etc.)")
+        console.print("    3. [bold]Restart the terminal completely[/bold] after granting permission")
+        console.print("    4. Run this check again")
+        
+    except Exception as e:
+        console.print(f"[red]Error taking screenshot:[/red] {e}")
+        raise typer.Exit(code=1)
 
 
 @app.command()
@@ -81,17 +140,10 @@ def analyze_screenshots(
 
 
 @app.command()
-def summary(
-    report_file: str = typer.Option("report.txt", "--report-file", "-r", help="Report file to summarize"),
-):
-    """Display a summary of the analysis report."""
+def summary():
+    """Display a summary of tracked screen activities."""
     setup_logging()
-    report_path = Path(report_file)
-    if not report_path.exists():
-        logger.error(f"Report file {report_file} does not exist")
-        raise typer.Exit(code=1)
-
-    report.display_summary(report_path)
+    report.display_summary()
     return 0
 
 

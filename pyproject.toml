@@ -23,6 +23,7 @@ dependencies = [
     "mss",
     "schedule",
     "psutil",
+    "pyobjc-framework-Quartz; sys_platform == 'darwin'",
 ]
 
 [project.optional-dependencies]

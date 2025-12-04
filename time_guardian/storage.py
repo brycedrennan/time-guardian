@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from PIL import Image
@@ -141,3 +142,64 @@ class Storage:
             Image.fromarray(mask_img).save(mask_path, optimize=False)
 
         return img_path, mask_path
+
+    def save_window_analysis(
+        self,
+        window_id: int,
+        app_name: str,
+        window_name: str,
+        timestamp: int,
+        frame_no: int,
+        classification: str,
+        image_path: Path,
+    ) -> Path:
+        """Save analysis for a specific window screenshot.
+
+        Args:
+            window_id: ID of the window
+            app_name: Name of the application
+            window_name: Name of the window
+            timestamp: Unix timestamp when screenshot was taken
+            frame_no: Frame number
+            classification: AI classification/description of the window content
+            image_path: Path to the screenshot that was analyzed
+
+        Returns:
+            Path: Path where analysis was saved
+        """
+        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        dt_str = dt.strftime("%Y-%m-%d-%H-%M-%S")
+
+        analysis = {
+            "timestamp": timestamp,
+            "datetime": dt.isoformat(),
+            "frame_no": frame_no,
+            "window_id": window_id,
+            "app_name": app_name,
+            "window_name": window_name,
+            "classification": classification,
+            "image_path": str(image_path),
+        }
+
+        # Create a sanitized filename
+        safe_app_name = "".join(c for c in app_name if c.isalnum() or c in (" ", "-", "_")).strip()
+        filepath = self.analysis_dir / f"{dt_str}_F{frame_no}_{window_id}_{safe_app_name}.json"
+        filepath.write_text(json.dumps(analysis, indent=2))
+        logger.info(f"Window analysis saved: {filepath}")
+        return filepath
+
+    def get_all_window_analyses(self) -> list[dict[str, Any]]:
+        """Get all window analysis results sorted by timestamp.
+
+        Returns:
+            list: List of analysis dictionaries sorted by timestamp
+        """
+        analyses = []
+        for filepath in self.analysis_dir.glob("*.json"):
+            try:
+                content = json.loads(filepath.read_text())
+                analyses.append(content)
+            except (json.JSONDecodeError, OSError) as e:
+                logger.warning(f"Error reading analysis file {filepath}: {e}")
+                continue
+        return sorted(analyses, key=lambda x: (x.get("timestamp", 0), x.get("frame_no", 0)))
