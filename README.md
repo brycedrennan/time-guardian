@@ -1,162 +1,173 @@
-# Time Guardian ⏱️🤖💻
+# Time Guardian ⏱
 
-**AI-powered time travel for your screen**
+**Know where your time actually goes.**
 
-Python-based screen activity tracker that captures images every 5 seconds for AI-powered computer usage analysis.
+Ever wonder how you *really* spent your day? Time Guardian silently captures screenshots and uses AI to tell you exactly what you were doing—so you can finally answer the question: "Where did my afternoon go?"
 
-## Features
-- Capture screenshots at regular intervals
-- Analyze computer usage with AI-powered image classification
-- Generate detailed time-tracking reports
+## Why Time Guardian?
 
-## Getting started
+📸 **Automatic tracking** — Set it and forget it. Screenshots every 5 seconds, intelligently filtered.  
+🧠 **AI-powered analysis** — AI Vision understands what you're doing, not just which app is open.  
+📊 **Honest reports** — See breakdowns by app, activity type, and get AI-generated summaries.  
+🔒 **Privacy-first** — Everything runs locally. Your screenshots and data stay on your machine.
+
+## Installation
+
 ```bash
 pip install time-guardian
 ```
 
+## Quick Start
+
+```bash
+# Start tracking (runs until you stop it)
+time-guardian track
+
+# Generate a report of your activity
+time-guardian summary
+```
+
+That's it. Time Guardian will capture screenshots, analyze them with AI, and show you where your time went.
+
 ## Usage
 
-### Track screen activity
+### Tracking
+
 ```bash
-# Track screen activity forever (until Ctrl+C)
+# Track indefinitely (Ctrl+C to stop)
 time-guardian track
 
 # Track for 1 hour
 time-guardian track --duration 60
 
-# Track with custom interval (in seconds)
+# Custom interval (every 10 seconds instead of 5)
 time-guardian track --duration 60 --interval 10
 
-# Track without AI classification
+# Track without AI analysis (just screenshots)
 time-guardian track --no-ai
-
-# Note: Screenshots are automatically saved to ~/.time-guardian/screenshots
 ```
 
-### Analyze and report
-```bash
-# Generate an AI-analyzed report
-time-guardian analyze-screenshots
+Screenshots are saved to `~/.time-guardian/screenshots` by default.
 
+### Reports & Analysis
+
+```bash
 # View activity summary
 time-guardian summary
+
+# Analyze a specific screenshot directory
+time-guardian analyze-screenshots -s ./my-screenshots
 
 # Check version
 time-guardian version
 ```
 
-### Utility commands
+### Utility Commands
+
 ```bash
-# Check if screen recording permissions are working
+# Verify screen recording permissions work
 time-guardian check-permissions
 
 # Take a single screenshot
-time-guardian screenshot --output my-screenshot.png
+time-guardian screenshot -o snapshot.png
 
-# View connected monitors
+# See connected monitors
 time-guardian monitors
 
-# View visible windows
+# List visible windows
 time-guardian windows
 
 # List running processes
 time-guardian processes
 ```
 
-### Command Details
+## Example Report
 
-- `track`: Start tracking screen activity
-  - `--duration`: Optional. Duration in minutes to track (default: run forever)
-  - `--interval`: Optional. Interval between screenshots in seconds (default: 5)
-  - `--ai/--no-ai`: Optional. Enable/disable AI classification (default: enabled)
-  - `--min-pixels`: Optional. Minimum changed pixels to trigger analysis (default: 1000)
-  - `--skip-permission-check`: Optional. Skip screen recording permission check
-  
-- `analyze-screenshots`: Analyze captured screenshots
-  - `--screenshot-dir`, `-s`: Optional. Directory containing screenshots (default: screenshots)
-  - `--output`, `-o`: Optional. Output file path for analysis report (default: report.txt)
+```
+Time Guardian Activity Report
+=============================
+Generated at: 2025-12-04T05:26:42
 
-- `summary`: Display activity summary
+Activity by Application
+-----------------------
+[Cursor] - 7 events
+  • Coding
+  • Code editing and running a script
+  ...
 
-- `check-permissions`: Check if screen recording permission is granted by taking a test screenshot
+[iTerm2] - 4 events
+  • Coding
+  ...
 
-- `screenshot`: Take a single screenshot
-  - `--output`, `-o`: Optional. Output file path (default: screenshot.png)
-
-- `monitors`: Display information about connected monitors
-  - `--width`, `-w`: Optional. Target width in characters for visual representation (default: 90)
-
-- `windows`: Display information about visible windows on screen
-  - `--all`: Optional. Show all windows instead of just layer 0 windows
-
-- `processes`: Display information about all running processes
-
-## Pipeline Processing
-
- -Capture every N seconds
-   - screenshots of each monitor
-   - map of windows and their positions
- - compare with previous screenshot
- - if different, save screenshot
- - if identical, log no change
- - AI classification of screenshot
- - GPT-4 Vision API to get activity labels
- - JSON files for activity analysis
- - Process Results to generate report
- - Summary Display to display activity counts and AI summary
-
-```mermaid
-graph TD
-    A[Screen Capture] -->|Every N seconds| B[Compare with Previous]
-    B -->|Different| C[Save Screenshot]
-    B -->|Identical| D[Log No Change]
-    C -->|PNG files| E[AI Classification]
-    E -->|GPT-4 Vision API| F[Activity Labels]
-    F -->|JSON files| G[Activity Analysis]
-    G -->|Process Results| H[Generate Report]
-    H -->|1. Activity Counts| I[Summary Display]
-    H -->|2. AI Summary| I
-    D -.->|Metadata Only| G
+AI Summary
+==========
+The computer activities primarily consisted of "Coding," with one 
+instance involving "Code editing and running a script."
 ```
 
+## How It Works
 
+```mermaid
+graph LR
+    A[📸 Capture] --> B{Changed?}
+    B -->|Yes| C[💾 Save]
+    B -->|No| D[Skip]
+    C --> E[🤖 AI Classify]
+    E --> F[📊 Report]
+```
 
-## Changelog
+1. **Capture** — Screenshots taken every N seconds across all monitors
+2. **Compare** — Only saves when screen content actually changes
+3. **Classify** — GPT-4 Vision analyzes each window to determine activity
+4. **Report** — Aggregates data into human-readable summaries
+
+## Command Reference
+
+| Command | Description |
+|---------|-------------|
+| `track` | Start tracking screen activity |
+| `summary` | Display activity summary |
+| `analyze-screenshots` | Analyze a directory of screenshots |
+| `check-permissions` | Verify screen recording permissions |
+| `screenshot` | Take a single screenshot |
+| `monitors` | Show connected monitors |
+| `windows` | Show visible windows |
+| `processes` | List running processes |
+
+### Track Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--duration` | ∞ | Minutes to track |
+| `--interval` | 5 | Seconds between captures |
+| `--ai/--no-ai` | enabled | AI classification |
+| `--min-pixels` | 1000 | Change threshold |
+
+## Requirements
+
+- Python 3.12+
+- macOS (Windows/Linux support planned)
+- Screen recording permission for your terminal
 
 ## Development
- 
- - Install pyenv
- - Git clone the project
- - Run `make init` to create the environment and install the dependencies
- - You can now run:
-   - `make help` to see the available commands
-   - `make test` to run the tests
-   - `make lint` to run the linter
-   - `make autoformat` to format the code
-   - `make type-check` to run the type checker
 
+```bash
+# Clone and setup
+git clone https://github.com/brycedrennan/time-guardian
+cd time-guardian
+make init
 
-## Todo
- - [x] capture screenshots (with multi-monitor support)
- - [x] capture a map of the windows and their positions
- - [x] use window map to mask the screenshot (to ignore things like the background, dock, menu bar, etc)
- - [x] only save screenshots if there was a change from the previous screenshot
- - [x] extract per-window images
- - [x] create function that collects currently running processes and their full paths
- - [ ] create description of each window using LLM on each window image that had changes
- - [ ] collect all the descriptions and send them to LLM for normalization and summarization
- - [ ] implement activity categorization (work, entertainment, productivity, etc)
- - [ ] implement idle time detection and handling
- - [ ] implement real-time activity monitoring dashboard
+# Common commands
+make test        # Run tests
+make lint        # Run linter
+make af          # Auto-format code
+make check       # Run all checks
+```
 
- ## Future
-  - [ ] implement intelligent screenshot compression to reduce storage usage
-  - [ ] create privacy mode to automatically blur sensitive content (passwords, emails, etc)
-  - [ ] create daily/weekly summary reports with activity trends
-  - [ ] add export functionality for activity data (CSV, JSON)
-  - [ ] create API endpoints for external tool integration
-  - [ ] ocr text from each window image
-  - [ ] train model to look specifically at browser window urls
+## License
 
-## Won't Do
- - [ ] add configurable rules for window/application exclusions
+MIT
+
+---
+
+**Stop wondering. Start knowing.** → `pip install time-guardian`
