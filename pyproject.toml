@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 packages = ["time_guardian"]
 
 [project]
-name = "time-guardian"
+name = "time-guard"
 authors = [
     {name = "Bryce Drennan"},
 ]
