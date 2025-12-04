@@ -1,6 +1,11 @@
-# Time Guardian ⏱
+<p align="center">
+  <img src="docs/images/time-guardian-hourglass.png" alt="Time Guardian Hourglass" width="90">
+  <img src="docs/images/time-guardian-text.png" alt="Time Guardian" width="500">
+</p>
 
-**Know where your time actually goes.**
+<p align="center">
+  <strong>Protect your time!</strong>
+</p>
 
 Ever wonder how you *really* spent your day? Time Guardian silently captures screenshots and uses AI to tell you exactly what you were doing—so you can finally answer the question: "Where did my afternoon go?"
 
