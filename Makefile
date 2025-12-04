@@ -28,12 +28,38 @@ check: afu lint typecheck test ## Run all checks.
 
 checku: check
 
-publish:  ## Build and upload the package to PyPI.
-	@echo -e "\n\033[0;34m📦 Building and uploading to PyPI...\033[0m\n"
-	@rm -rf dist
+version:  ## Show the current version (from git tags).
+	@uv run -- python -c "from time_guardian._version import __version__; print(__version__)"
+
+build:  ## Build the package distribution files.
+	@echo -e "\n\033[0;34m📦 Building package...\033[0m\n"
+	@rm -rf dist build *.egg-info
 	@uv run -- python -m build
+	@echo -e "\033[0;32m✅ Build complete! Files in dist/\033[0m\n"
+	@ls -la dist/
+
+publish: build  ## Build and upload the package to PyPI.
+	@echo -e "\n\033[0;34m📤 Uploading to PyPI...\033[0m\n"
 	@uv run -- twine upload dist/* --repository pypi -u __token__
-	@echo "\n\033[0;32m✅ 📦 Package published successfully to pypi! ✨ 🍰 ✨\033[0m\n"
+	@echo -e "\n\033[0;32m✅ 📦 Package published successfully to pypi! ✨ 🍰 ✨\033[0m\n"
+
+publish-test: build  ## Build and upload to TestPyPI (for testing).
+	@echo -e "\n\033[0;34m📤 Uploading to TestPyPI...\033[0m\n"
+	@uv run -- twine upload dist/* --repository testpypi -u __token__
+	@echo -e "\n\033[0;32m✅ 📦 Package published to TestPyPI! ✨\033[0m\n"
+	@echo -e "Install with: pip install -i https://test.pypi.org/simple/ time-guardian"
+
+release:  ## Create a new release (usage: make release v=0.1.0)
+	@if [ -z "$(v)" ]; then \
+		echo -e "\033[0;31m❌ Error: Version not specified. Usage: make release v=0.1.0\033[0m"; \
+		exit 1; \
+	fi
+	@echo -e "\n\033[0;34m🏷️  Creating release $(v)...\033[0m\n"
+	@git tag -a "$(v)" -m "Release $(v)"
+	@echo -e "\033[0;32m✅ Tag $(v) created locally\033[0m"
+	@echo -e "\nTo publish this release:"
+	@echo -e "  1. Push the tag:  git push origin $(v)"
+	@echo -e "  2. Publish:       make publish\n"
 
 install-uv:  # Install uv if not already installed
 	@if ! uv --help >/dev/null 2>&1; then \

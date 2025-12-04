@@ -111,3 +111,5 @@ ENV/
 
 project_context.json
 report.txt
+**/_version.py
+time_guardian/_version.py
