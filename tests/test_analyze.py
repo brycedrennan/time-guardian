@@ -9,12 +9,13 @@ from time_guardian.analyze import main, process_screenshot, process_screenshots
 
 @pytest.fixture
 def mock_openai():
-    with patch("time_guardian.analyze.client") as mock_client:
-        mock_response = MagicMock()
-        mock_choice = MagicMock()
-        mock_choice.message.content = "Test activity"
-        mock_response.choices = [mock_choice]
-        mock_client.chat.completions.create.return_value = mock_response
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_choice = MagicMock()
+    mock_choice.message.content = "Test activity"
+    mock_response.choices = [mock_choice]
+    mock_client.chat.completions.create.return_value = mock_response
+    with patch("time_guardian.analyze._get_client", return_value=mock_client):
         yield mock_client
 
 

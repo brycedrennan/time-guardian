@@ -9,7 +9,16 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-client = OpenAI()
+# Lazy client initialization to avoid errors when OPENAI_API_KEY is not set
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = OpenAI()
+    return _client
+
 
 STORAGE_DIR = Path.home() / ".time-guardian"
 
@@ -26,7 +35,7 @@ def process_screenshot(image_path: Path) -> str:
             img.save(buffered, format="PNG")
             img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-        response = client.chat.completions.create(
+        response = _get_client().chat.completions.create(
             model="gpt-4o",
             messages=[
                 {

@@ -10,11 +10,6 @@ from time_guardian.ai_classifier import AIClassifier
 
 
 @pytest.fixture
-def ai_classifier():
-    return AIClassifier()
-
-
-@pytest.fixture
 def mock_openai():
     with patch("time_guardian.ai_classifier.OpenAI") as mock:
         mock_client = MagicMock()
@@ -24,6 +19,12 @@ def mock_openai():
         mock_chat.completions = mock_completions
         mock.return_value = mock_client
         yield mock
+
+
+@pytest.fixture
+def ai_classifier(mock_openai):
+    """Create AIClassifier with mocked OpenAI client."""
+    return AIClassifier()
 
 
 @pytest.fixture

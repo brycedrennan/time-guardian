@@ -1120,7 +1120,7 @@ wheels = [
 ]
 
 [[package]]
-name = "timeguardian"
+name = "time-guard"
 source = { editable = "." }
 dependencies = [
     { name = "mss" },
