@@ -14,9 +14,10 @@ def test_version():
 
 
 @patch("time_guardian.capture.start_tracking")
-def test_track_command(mock_start_tracking):
+@patch("time_guardian.cli.check_screen_recording_permission", return_value=(True, ""))
+def test_track_command(mock_permission, mock_start_tracking):
     result = runner.invoke(app, ["track", "--duration", "1", "--interval", "5"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Command failed with output: {result.output}"
     mock_start_tracking.assert_called_once()
 
 

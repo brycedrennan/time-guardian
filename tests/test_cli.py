@@ -51,9 +51,12 @@ def test_invalid_command(runner):
 @pytest.mark.parametrize(("duration", "interval"), [(30, 10), (60, 5)])
 def test_track_command(runner, mock_storage, duration, interval):
     mock_storage / "screenshots"
-    with patch("time_guardian.capture.start_tracking") as mock_start:
+    with (
+        patch("time_guardian.capture.start_tracking") as mock_start,
+        patch("time_guardian.cli.check_screen_recording_permission", return_value=(True, "")),
+    ):
         result = runner.invoke(app, ["track", "--duration", str(duration), "--interval", str(interval)])
-        assert result.exit_code == 0
+        assert result.exit_code == 0, f"Command failed with output: {result.output}"
         mock_start.assert_called_once_with(duration, interval, enable_ai=True, min_changed_pixels=1000)
 
 
