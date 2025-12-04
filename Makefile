@@ -49,16 +49,16 @@ publish-test: build  ## Build and upload to TestPyPI (for testing).
 	@echo -e "\n\033[0;32m✅ 📦 Package published to TestPyPI! ✨\033[0m\n"
 	@echo -e "Install with: pip install -i https://test.pypi.org/simple/ time-guardian"
 
-release:  ## Create a new release (usage: make release v=0.1.0)
-	@if [ -z "$(v)" ]; then \
-		echo -e "\033[0;31m❌ Error: Version not specified. Usage: make release v=0.1.0\033[0m"; \
+release:  ## Create a new release (usage: make release tag=0.1.0)
+	@if [ -z "$(tag)" ]; then \
+		echo -e "\033[0;31m❌ Error: Version not specified. Usage: make release tag=0.1.0\033[0m"; \
 		exit 1; \
 	fi
-	@echo -e "\n\033[0;34m🏷️  Creating release $(v)...\033[0m\n"
-	@git tag -a "$(v)" -m "Release $(v)"
-	@echo -e "\033[0;32m✅ Tag $(v) created locally\033[0m"
+	@echo -e "\n\033[0;34m🏷️  Creating release $(tag)...\033[0m\n"
+	@git tag -a "$(tag)" -m "Release $(tag)"
+	@echo -e "\033[0;32m✅ Tag $(tag) created locally\033[0m"
 	@echo -e "\nTo publish this release:"
-	@echo -e "  1. Push the tag:  git push origin $(v)"
+	@echo -e "  1. Push the tag:  git push origin $(tag)"
 	@echo -e "  2. Publish:       make publish\n"
 
 install-uv:  # Install uv if not already installed
