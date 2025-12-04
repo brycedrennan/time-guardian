@@ -23,8 +23,10 @@ def test_capture_screenshot(tmp_path):
     mock_screenshot.raw = bytes(1920 * 1080 * 4)
     mock_sct.grab.return_value = mock_screenshot
 
-    with patch("time_guardian.capture.screenshotter") as mock_screenshotter:
-        mock_screenshotter.return_value = mock_sct
+    # Patch MSS class to return our mock when used as context manager
+    with patch("time_guardian.mss_enhanced.MSS") as mock_mss:
+        mock_mss.return_value.__enter__.return_value = mock_sct
+        mock_mss.return_value.__exit__.return_value = None
         result = capture_screenshot()
 
         mock_sct.grab.assert_called_once()
@@ -41,8 +43,10 @@ def test_capture_screenshot_error(tmp_path):
     ]
     mock_sct.grab.side_effect = Exception("Mocked error")
 
-    with patch("time_guardian.capture.screenshotter") as mock_screenshotter:
-        mock_screenshotter.return_value = mock_sct
+    # Patch MSS class to return our mock when used as context manager
+    with patch("time_guardian.mss_enhanced.MSS") as mock_mss:
+        mock_mss.return_value.__enter__.return_value = mock_sct
+        mock_mss.return_value.__exit__.return_value = None
         with pytest.raises(Exception, match="Mocked error"):
             capture_screenshot()
 

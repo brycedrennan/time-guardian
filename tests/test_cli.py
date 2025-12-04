@@ -54,7 +54,7 @@ def test_track_command(runner, mock_storage, duration, interval):
     with patch("time_guardian.capture.start_tracking") as mock_start:
         result = runner.invoke(app, ["track", "--duration", str(duration), "--interval", str(interval)])
         assert result.exit_code == 0
-        mock_start.assert_called_once_with(duration, interval)
+        mock_start.assert_called_once_with(duration, interval, enable_ai=True, min_changed_pixels=1000)
 
 
 def test_analyze_command(runner, mock_storage):
@@ -72,16 +72,10 @@ def test_analyze_command(runner, mock_storage):
 
 
 def test_summary_command(runner, mock_storage):
-    # Create a mock report file
-    report_path = mock_storage / "report.txt"
-    report_path.write_text("Test report content")
-
-    with patch("time_guardian.report.display_summary") as mock_display, patch("pathlib.Path.exists") as mock_exists:
-        # Mock the report file existence check
-        mock_exists.return_value = True
+    with patch("time_guardian.report.display_summary") as mock_display:
         mock_display.return_value = None
 
-        result = runner.invoke(app, ["summary", "--report-file", str(report_path)])
+        result = runner.invoke(app, ["summary"])
         assert result.exit_code == 0
         mock_display.assert_called_once()
 

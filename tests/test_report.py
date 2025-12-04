@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -29,8 +28,14 @@ def report(mock_storage, mock_ai_classifier):
 
 def test_generate_report(report, tmp_path):
     output_path = tmp_path / "report.txt"
-    report.storage.get_analysis_results.return_value = [Path("analysis_1.json")]
-    report.storage.get_analysis_by_timestamp.return_value = {"classification": "Test activity"}
+    report.storage.get_all_window_analyses.return_value = [
+        {
+            "app_name": "TestApp",
+            "window_name": "Test Window",
+            "classification": "Test activity",
+            "datetime": "2025-01-01T00:00:00",
+        }
+    ]
     report.ai_classifier.summarize_activity.return_value = "AI summary of activities"
 
     report.generate_report(output_path)
@@ -42,14 +47,32 @@ def test_generate_report(report, tmp_path):
 
 
 def test_display_summary(report, capsys):
-    report.storage.get_analysis_results.return_value = [Path("analysis_1.json")]
-    report.storage.get_analysis_by_timestamp.return_value = {"classification": "Test activity"}
+    report.storage.get_all_window_analyses.return_value = [
+        {
+            "app_name": "TestApp",
+            "window_name": "Test Window",
+            "classification": "Test activity",
+            "datetime": "2025-01-01T00:00:00",
+        },
+        {
+            "app_name": "TestApp",
+            "window_name": "Test Window 2",
+            "classification": "Another activity",
+            "datetime": "2025-01-01T00:01:00",
+        },
+        {
+            "app_name": "OtherApp",
+            "window_name": "Other Window",
+            "classification": "Third activity",
+            "datetime": "2025-01-01T00:02:00",
+        },
+    ]
     report.ai_classifier.summarize_activity.return_value = "AI summary"
 
     report.display_summary()
 
     captured = capsys.readouterr()
-    assert "Test activity" in captured.out
+    assert "TestApp" in captured.out
     assert "AI summary" in captured.out
 
 
