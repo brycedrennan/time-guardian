@@ -50,19 +50,16 @@ jobs:
     - name: Typecheck
       run: uv run --frozen -- ty check
   test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.12", "3.13"]
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.13"
     - uses: astral-sh/setup-uv@v6
       with:
         enable-cache: false
     - run: echo "UV_PYTHON=$pythonLocation" >> $GITHUB_ENV
     - run: uv sync --frozen --all-extras
-    - name: Test with python ${{ matrix.python-version }}
+    - name: Test
       run: uv run --frozen --all-extras -- pytest -v
