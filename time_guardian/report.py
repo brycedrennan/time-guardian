@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -56,7 +56,7 @@ class Report:
         with output_path.open("w") as f:
             f.write("Time Guardian Activity Report\n")
             f.write("=============================\n\n")
-            f.write(f"Generated at: {datetime.now(timezone.utc).isoformat()}\n")
+            f.write(f"Generated at: {datetime.now(UTC).isoformat()}\n")
             f.write(f"Total activities analyzed: {len(activities)}\n\n")
 
             # Summary by app
@@ -65,7 +65,9 @@ class Report:
             for app_name, app_acts in sorted(app_activities.items(), key=lambda x: -len(x[1])):
                 f.write(f"[{app_name}] - {len(app_acts)} events\n")
                 for act in app_acts[:5]:  # Show first 5 per app
-                    f.write(f"  • {act.get('datetime', 'Unknown time')}: {act.get('classification', 'No description')}\n")
+                    f.write(
+                        f"  • {act.get('datetime', 'Unknown time')}: {act.get('classification', 'No description')}\n"
+                    )
                 if len(app_acts) > 5:
                     f.write(f"  ... and {len(app_acts) - 5} more\n")
                 f.write("\n")
@@ -160,7 +162,7 @@ def generate_report(output_path: Path) -> None:
 
 def display_summary(report_path: Path | None = None) -> None:
     """Display a summary of screen time activities.
-    
+
     Args:
         report_path: Ignored (kept for CLI compatibility). Summary is generated from stored analyses.
     """

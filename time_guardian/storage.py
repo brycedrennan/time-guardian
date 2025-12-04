@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +38,7 @@ class Storage:
         Returns:
             Path: Path where screenshot was saved
         """
-        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        dt = datetime.fromtimestamp(timestamp, tz=UTC)
         dt_str = dt.strftime("%Y-%m-%d-%H-%M-%S")
         filepath = self.screenshots_dir / f"{dt_str}_F{frame_no}.png"
 
@@ -115,7 +115,7 @@ class Storage:
         Returns:
             tuple: Path where screenshot was saved and path where diff mask was saved (if provided)
         """
-        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        dt = datetime.fromtimestamp(timestamp, tz=UTC)
         dt_str = dt.strftime("%Y-%m-%d-%H-%M-%S")
 
         # Create a sanitized filename
@@ -167,7 +167,7 @@ class Storage:
         Returns:
             Path: Path where analysis was saved
         """
-        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        dt = datetime.fromtimestamp(timestamp, tz=UTC)
         dt_str = dt.strftime("%Y-%m-%d-%H-%M-%S")
 
         analysis = {

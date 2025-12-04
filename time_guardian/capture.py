@@ -100,18 +100,18 @@ def screenshotter():
 
 def capture_screenshot():
     """Capture a screenshot of all monitors.
-    
+
     Creates a fresh MSS instance for each capture to avoid data caching issues
     on macOS where the raw buffer may not update within a single process.
     """
     from time_guardian.mss_enhanced import MSS
-    
+
     # Use fresh MSS instance for each grab to avoid caching issues
     with MSS() as sct:
         monitor = sct.monitors[0]
         s = sct.grab(monitor)
         scale_factor = int(s.height / monitor["height"])
-        
+
         # Create numpy view of raw buffer with strided access for scaling
         np_view = np.ndarray(
             shape=(s.height // scale_factor, s.width // scale_factor, 3),
@@ -119,7 +119,7 @@ def capture_screenshot():
             buffer=s.raw,
             strides=(s.width * (scale_factor * 4), scale_factor * 4, 1),
         )
-        
+
         # Copy the data before MSS context closes
         np_img = np_view.copy()
 
@@ -188,19 +188,17 @@ def start_tracking(
         diff_counts = dict(zip(unique_values, counts))
 
         window_lookup = {window["window_id"]: window for window in windows}
-        
+
         # Track windows that changed for this frame
         changed_windows = []
-        
+
         for window_id, count in diff_counts.items():
             window_id = int(window_id)
             window = window_lookup.get(window_id)
             if not window:
                 continue
             if count > min_changed_pixels:
-                logger.info(
-                    f"Frame {frame_no}: {window['app_name']} - {window['window_name']} changed {count} pixels"
-                )
+                logger.info(f"Frame {frame_no}: {window['app_name']} - {window['window_name']} changed {count} pixels")
 
                 # Get window bounds in display coordinates
                 x = int(window["position"]["x"]) + int(offset_x)
@@ -217,7 +215,7 @@ def start_tracking(
 
                 cropped_img[~cropped_window_mask] = 0
                 cropped_diff_mask[~cropped_window_mask] = 0
-                
+
                 # Save the window-specific screenshot
                 img_path, _ = storage.save_window_screenshot(
                     cropped_img,
@@ -227,26 +225,28 @@ def start_tracking(
                     timestamp,
                     frame_no,
                 )
-                
-                changed_windows.append({
-                    "window": window,
-                    "img_path": img_path,
-                    "pixel_count": count,
-                })
-        
+
+                changed_windows.append(
+                    {
+                        "window": window,
+                        "img_path": img_path,
+                        "pixel_count": count,
+                    }
+                )
+
         # Classify changed windows with AI
         if classifier and changed_windows:
             for item in changed_windows:
                 window = item["window"]
                 img_path = item["img_path"]
-                
+
                 logger.info(f"Classifying: {window['app_name']} - {window['window_name']}")
                 result = classifier.classify_image(img_path)
-                
+
                 if "classification" in result:
                     classification = result["classification"]
                     logger.info(f"  → {classification}")
-                    
+
                     # Save the analysis
                     storage.save_window_analysis(
                         window_id=window["window_id"],
@@ -259,7 +259,7 @@ def start_tracking(
                     )
                 elif "error" in result:
                     logger.warning(f"  → Classification failed: {result['error']}")
-        
+
         previous_screenshot = np_img
         frame_no += 1
         return None

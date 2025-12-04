@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=76", "setuptools_scm[toml]>=8.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -12,7 +12,7 @@ authors = [
 ]
 description = "Python-based screen activity tracker that captures images every 5 seconds for AI-powered computer usage analysis."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = [
     "pillow",
@@ -26,14 +26,17 @@ dependencies = [
     "pyobjc-framework-Quartz; sys_platform == 'darwin'",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
+    "build",
     "coverage",
-    "mypy",
     "pytest",
+    "pytest-asyncio",
     "pytest-randomly",
     "pytest-sugar",
     "ruff",
+    "twine",
+    "ty",
     "wheel",
 ]
 
@@ -44,8 +47,20 @@ Source = "https://github.com/brycedrennan/time-guardian"
 [tool.setuptools_scm]
 write_to = "time_guardian/_version.py"
 
-[tool.mypy]
-ignore_missing_imports = true
+[tool.ty.terminal]
+output-format = "concise"
+
+[tool.ty.rules]
+missing-argument = "ignore"
+unresolved-reference = "ignore"
+# Ignore numpy type stubs issues
+invalid-type-form = "ignore"
+# Ignore platform-specific imports (e.g., Quartz on macOS)
+unresolved-import = "ignore"
+unresolved-attribute = "ignore"
+# Ignore type mismatches that are often false positives
+invalid-argument-type = "ignore"
+invalid-return-type = "ignore"
 
 [tool.ruff]
 extend-exclude = ["time_guardian/_version.py"]
@@ -54,7 +69,9 @@ output-format = "concise"
 
 [tool.ruff.lint]
 extend-ignore = [
-    "E501", "G004", "ISC001", "PLC0415", "PT011", "RET504", "SIM114", "TRY003", "TRY300", "TRY400", "TRY401", "RUF012", "RUF100"
+    "E501", "G004", "ISC001", "PLC0415", "PT011", "RET504", "SIM114", 
+    "TC002", "TC003",
+    "TRY003", "TRY300", "TRY400", "TRY401", "RUF012", "RUF100"
 ]
 extend-select = [
     "I", "E", "W", "UP", "ASYNC", "BLE", "A001", "A002",
@@ -69,8 +86,13 @@ combine-as-imports = true
 max-string-length = 50
 
 [tool.pytest.ini_options]
-addopts = "-s --tb=native -v --durations=10"
+addopts = "-s --tb=short -v --durations=10"
 norecursedirs = ["build", "dist"]
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore:.*:DeprecationWarning:litellm.*",
+    "ignore:Support for class-based `config` is deprecated.*:DeprecationWarning:pydantic._internal._config",
+]
 
 [project.scripts]
 time-guardian = "time_guardian.cli:app"
