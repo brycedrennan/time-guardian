@@ -1,10 +1,16 @@
 <p align="center">
-  <img src="docs/images/time-guardian-hourglass.png" alt="Time Guardian Hourglass" width="90">
-  <img src="docs/images/time-guardian-text.png" alt="Time Guardian" width="500">
+  <img src="https://raw.githubusercontent.com/brycedrennan/time-guardian/master/docs/images/time-guardian-hourglass.png" alt="Time Guardian Hourglass" width="90">
+  <img src="https://raw.githubusercontent.com/brycedrennan/time-guardian/master/docs/images/time-guardian-text.png" alt="Time Guardian" width="500">
 </p>
 
 <p align="center">
   <strong>Protect your time!</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/brycedrennan/time-guardian/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/actions/workflow/status/brycedrennan/time-guardian/ci.yaml?branch=master&label=CI&logo=github" alt="CI Status"></a>
+  <a href="https://pypi.org/project/time-guardian/"><img src="https://img.shields.io/pypi/v/time-guardian?logo=pypi&logoColor=white" alt="PyPI Version"></a>
+  <a href="https://github.com/brycedrennan/time-guardian/blob/master/LICENSE"><img src="https://img.shields.io/github/license/brycedrennan/time-guardian" alt="License"></a>
 </p>
 
 Ever wonder how you *really* spent your day? Time Guardian silently captures screenshots and uses AI to tell you exactly what you were doing—so you can finally answer the question: "Where did my afternoon go?"
