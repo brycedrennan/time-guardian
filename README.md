@@ -18,11 +18,17 @@ pip install time-guardian
 
 ### Track screen activity
 ```bash
-# Track screen activity for 1 hour
-time-guardian track 60
+# Track screen activity forever (until Ctrl+C)
+time-guardian track
+
+# Track for 1 hour
+time-guardian track --duration 60
 
 # Track with custom interval (in seconds)
-time-guardian track 60 --interval 10
+time-guardian track --duration 60 --interval 10
+
+# Track without AI classification
+time-guardian track --no-ai
 
 # Note: Screenshots are automatically saved to ~/.time-guardian/screenshots
 ```
@@ -30,7 +36,7 @@ time-guardian track 60 --interval 10
 ### Analyze and report
 ```bash
 # Generate an AI-analyzed report
-time-guardian analyze
+time-guardian analyze-screenshots
 
 # View activity summary
 time-guardian summary
@@ -39,18 +45,51 @@ time-guardian summary
 time-guardian version
 ```
 
+### Utility commands
+```bash
+# Check if screen recording permissions are working
+time-guardian check-permissions
+
+# Take a single screenshot
+time-guardian screenshot --output my-screenshot.png
+
+# View connected monitors
+time-guardian monitors
+
+# View visible windows
+time-guardian windows
+
+# List running processes
+time-guardian processes
+```
+
 ### Command Details
 
-- `track <duration>`: Start tracking screen activity
-  - `duration`: Required. Duration in minutes to track
+- `track`: Start tracking screen activity
+  - `--duration`: Optional. Duration in minutes to track (default: run forever)
   - `--interval`: Optional. Interval between screenshots in seconds (default: 5)
+  - `--ai/--no-ai`: Optional. Enable/disable AI classification (default: enabled)
+  - `--min-pixels`: Optional. Minimum changed pixels to trigger analysis (default: 1000)
+  - `--skip-permission-check`: Optional. Skip screen recording permission check
   
-- `analyze`: Analyze captured screenshots
-  - `--screenshot-dir`: Optional. Directory containing screenshots (default: screenshots)
-  - `--output`: Optional. Output file path for analysis report (default: report.txt)
+- `analyze-screenshots`: Analyze captured screenshots
+  - `--screenshot-dir`, `-s`: Optional. Directory containing screenshots (default: screenshots)
+  - `--output`, `-o`: Optional. Output file path for analysis report (default: report.txt)
 
 - `summary`: Display activity summary
-  - `--report-file`: Optional. Report file to summarize (default: report.txt)
+
+- `check-permissions`: Check if screen recording permission is granted by taking a test screenshot
+
+- `screenshot`: Take a single screenshot
+  - `--output`, `-o`: Optional. Output file path (default: screenshot.png)
+
+- `monitors`: Display information about connected monitors
+  - `--width`, `-w`: Optional. Target width in characters for visual representation (default: 90)
+
+- `windows`: Display information about visible windows on screen
+  - `--all`: Optional. Show all windows instead of just layer 0 windows
+
+- `processes`: Display information about all running processes
 
 ## Pipeline Processing
 
@@ -103,9 +142,8 @@ graph TD
  - [x] use window map to mask the screenshot (to ignore things like the background, dock, menu bar, etc)
  - [x] only save screenshots if there was a change from the previous screenshot
  - [x] extract per-window images
+ - [x] create function that collects currently running processes and their full paths
  - [ ] create description of each window using LLM on each window image that had changes
- - [ ] create function that collects currently running processes and their full paths
-   - [ ] collect: application name, window title, window_id, process_id, process path,content description, task type, etc
  - [ ] collect all the descriptions and send them to LLM for normalization and summarization
  - [ ] implement activity categorization (work, entertainment, productivity, etc)
  - [ ] implement idle time detection and handling
